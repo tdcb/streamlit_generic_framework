@@ -1,0 +1,10 @@
+# environment.yml
+# Conda environment file for Streamlit in Snowflake.
+# Specifies the dependencies needed to run the application.
+
+name: streamlit-in-snowflake
+dependencies:
+  - python=3.8
+  - snowflake-snowpark-python
+  - streamlit
+  - pandas
