@@ -278,22 +278,25 @@ def main():
 
     # --- Authentication from Snowflake Session ---
     st.session_state.user_id = session.get_current_user().replace("'", "")
-    # Find the application role from the user's current Snowflake role
-    sf_role = session.get_current_role().replace("'", "")
-    user_roles = config['users'][config['users']['USER_NAME'].str.upper() == st.session_state.user_id.upper()]
-
-    # This is a simplification. A real app might map SF roles to app roles more robustly.
-    # Here we assume the user_id is the user's name in the USERS table.
-    app_user = config['users'][config['users'].index.str.upper() == st.session_state.user_id.upper()]
-    if not app_user.empty:
-        st.session_state.user_role = app_user.iloc[0]['ROLE_NAME']
-    else:
-        st.error(f"User '{st.session_state.user_id}' not found in the application's USERS table. Please add this user."); return
+    # The user's active role in Snowflake is the single source of truth for permissions.
+    st.session_state.user_role = session.get_current_role().replace("'", "").upper()
 
     st.sidebar.title("👤 User Information")
-    st.sidebar.write(f"User: **{st.session_state.user_id}**")
-    st.sidebar.write(f"Role: **{st.session_state.user_role}**")
+
+    # A cosmetic lookup in the USERS table for a friendly display name.
+    # The app will function even if the user is not in this table.
+    app_user = config['users'][config['users'].index.str.upper() == st.session_state.user_id.upper()]
+    display_name = app_user.iloc[0]['USER_NAME'] if not app_user.empty else st.session_state.user_id
+
+    st.sidebar.write(f"User: **{display_name}**")
+    st.sidebar.write(f"Active Role: **{st.session_state.user_role}**")
     st.sidebar.divider()
+
+    # Check if the user's active role has any permissions configured in the application.
+    if st.session_state.user_role not in config['permissions']['ROLE_NAME'].str.upper().unique():
+        st.warning(f"Your active Snowflake role '{st.session_state.user_role}' has no permissions configured in this application.")
+        st.info("Please contact an administrator to have the necessary application roles granted in Snowflake (e.g., EDITOR, ADMIN, APPROVER_L1), or switch your active role.")
+        st.stop()
 
     # --- Screen and Record Navigation ---
     st.sidebar.title("⚙️ Navigation")
