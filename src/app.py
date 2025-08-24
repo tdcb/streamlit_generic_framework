@@ -128,8 +128,10 @@ def save_record(session, screen_info, record_id, form_data, user_id, user_role):
         st.session_state.current_record_id = new_record_id
         st.session_state.form_data = {}
         st.experimental_rerun()
+    except SnowparkSQLException as db_err:
+        st.error(f"Database Error saving record: {db_err}")
     except Exception as e:
-        st.error(f"Error saving record: {e}")
+        st.error(f"An unexpected error occurred while saving: {e}")
 
 def update_record_status(session, config, screen_info, record_id, action_type, user_id, user_role, comments=""):
     try:
@@ -164,8 +166,10 @@ def update_record_status(session, config, screen_info, record_id, action_type, u
         st.success(f"Record action '{action_type}' completed. New status: `{new_data['status']}`.")
         get_record_data.clear()
         st.experimental_rerun()
+    except SnowparkSQLException as db_err:
+        st.error(f"Database Error updating status: {db_err}")
     except Exception as e:
-        st.error(f"Error updating status: {e}")
+        st.error(f"An unexpected error occurred while updating status: {e}")
 
 # --- UI Rendering Engine ---
 # (render_element and render_screen logic is largely the same, just needs session passed instead of conn)
