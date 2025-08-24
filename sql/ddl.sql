@@ -22,7 +22,7 @@ CREATE OR REPLACE TABLE SCREEN_GROUPS (
   display_order INT
 );
 
--- Updated ELEMENTS table with declarative dropdown configuration
+-- Simplified ELEMENTS table
 CREATE OR REPLACE TABLE ELEMENTS (
   element_id VARCHAR PRIMARY KEY,
   group_id VARCHAR NOT NULL REFERENCES SCREEN_GROUPS(group_id),

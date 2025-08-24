@@ -259,15 +259,45 @@ def render_element(session, config, screen_info, element, user_role, record_data
             st.session_state.form_data[db_column] = ",".join(selected_values)
 
 def render_screen(session, config, screen_id, user_role, record_data):
+    """Renders a full screen with a smart, automatic multi-column layout."""
     screen_info = config['screens'].loc[screen_id]
     st.header(screen_info['SCREEN_NAME'])
     st.caption(screen_info['DESCRIPTION'])
+
     screen_groups = config['groups'][config['groups']['SCREEN_ID'] == screen_id].sort_values('DISPLAY_ORDER')
+
+    # Helper to iterate over pairs
+    def pairwise(iterable):
+        "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+        from itertools import zip_longest
+        return zip_longest(iterable, iterable)
+
     for _, group in screen_groups.iterrows():
         with st.expander(group['GROUP_NAME'], expanded=True):
-            elements = config['elements'][config['elements']['GROUP_ID'] == group['GROUP_ID']].sort_values('DISPLAY_ORDER')
-            for _, element in elements.iterrows():
-                render_element(session, config, screen_info, element, user_role, record_data)
+            group_elements = config['elements'][config['elements']['GROUP_ID'] == group['GROUP_ID']].sort_values('DISPLAY_ORDER')
+
+            # Separate fields from buttons for different layout treatment
+            fields = group_elements[group_elements['ELEMENT_TYPE'] != 'button']
+            buttons = group_elements[group_elements['ELEMENT_TYPE'] == 'button']
+
+            # Render fields in a 2-column layout
+            for element1_tuple, element2_tuple in pairwise(fields.iterrows()):
+                col1, col2 = st.columns(2)
+                if element1_tuple:
+                    with col1:
+                        render_element(session, config, screen_info, element1_tuple[1], user_role, record_data)
+                if element2_tuple:
+                    with col2:
+                        render_element(session, config, screen_info, element2_tuple[1], user_role, record_data)
+
+            # Render buttons in a separate, more dense row
+            if not buttons.empty:
+                st.divider()
+                # Create as many columns as there are buttons, for alignment
+                cols = st.columns(len(buttons) + 2) # Add spacers
+                for i, (_, button) in enumerate(buttons.iterrows()):
+                    with cols[i]:
+                        render_element(session, config, screen_info, button, user_role, record_data)
 
 # --- Main Application Logic ---
 def main():

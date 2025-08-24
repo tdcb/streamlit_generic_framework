@@ -1,12 +1,11 @@
 -- ----------------------------------------------------------------------------
--- Sample Data for Streamlit Dynamic UI Framework (v2)
+-- Sample Data for Streamlit Dynamic UI Framework (v4 - Auto Layout)
 -- ----------------------------------------------------------------------------
--- This script is re-runnable and includes data for two screens:
--- 1. Vendor Onboarding (updated to use declarative dropdowns)
--- 2. Investment Fund (new screen demonstrating the enhancement)
+-- This script is re-runnable and includes data for two screens.
+-- Layout is now handled automatically by the application.
 
 -- ----------------------------------------------------------------------------
--- Clean Slate: Delete existing data to prevent duplicates on re-run
+-- Clean Slate
 -- ----------------------------------------------------------------------------
 DELETE FROM ROLE_PERMISSIONS;
 DELETE FROM ELEMENTS;
@@ -34,7 +33,7 @@ INSERT INTO USERS (user_id, user_name, role_name) VALUES
 INSERT INTO WORKFLOW_LEVELS (workflow_id, level_num, role_name) VALUES
   ('VENDOR_WF', 1, 'Approver_L1'),
   ('VENDOR_WF', 2, 'Approver_L2'),
-  ('FUND_WF', 1, 'Approver_L1'); -- Single-level approval for funds
+  ('FUND_WF', 1, 'Approver_L1');
 
 -- ----------------------------------------------------------------------------
 -- 3. Reference Data
@@ -49,7 +48,7 @@ INSERT INTO REF_FUND_TYPES (fund_type_id, fund_type_name) VALUES
   ('HF', 'Hedge Fund'), ('MF', 'Mutual Fund'), ('ETF', 'Exchange-Traded Fund'), ('PE', 'Private Equity');
 
 -- ----------------------------------------------------------------------------
--- 4. Screen Configuration: "Vendor Onboarding" (Updated)
+-- 4. Screen Configuration: "Vendor Onboarding"
 -- ----------------------------------------------------------------------------
 INSERT INTO SCREENS (screen_id, screen_name, description, target_table, unique_key_column) VALUES
   ('vendor_onboarding', 'Vendor Onboarding', 'Screen to manage new vendor information.', 'VENDOR_DATA', 'record_id');
@@ -59,7 +58,7 @@ INSERT INTO SCREEN_GROUPS (group_id, screen_id, group_name, display_order) VALUE
   ('vg_compliance', 'vendor_onboarding', 'Compliance Details', 2),
   ('vg_actions', 'vendor_onboarding', 'Workflow Actions', 3);
 
--- Elements updated to use new declarative options columns
+-- Simplified Elements, relying on display_order for auto-layout
 INSERT INTO ELEMENTS (element_id, group_id, element_type, label, db_column, display_order, options_source_table, options_value_column, options_label_column, options_query) VALUES
   ('ve_vendor_name', 'vg_general', 'text', 'Vendor Name', 'vendor_name', 1, NULL, NULL, NULL, NULL),
   ('ve_reg_date', 'vg_general', 'date', 'Registration Date', 'registration_date', 2, NULL, NULL, NULL, NULL),
@@ -70,37 +69,22 @@ INSERT INTO ELEMENTS (element_id, group_id, element_type, label, db_column, disp
   ('vb_approve', 'vg_actions', 'button', 'Approve', NULL, 3, NULL, NULL, NULL, NULL),
   ('vb_reject', 'vg_actions', 'button', 'Reject', NULL, 4, NULL, NULL, NULL, NULL);
 
--- Permissions for Vendor Onboarding (no changes needed here)
+-- Permissions for Vendor Onboarding
 INSERT INTO ROLE_PERMISSIONS (permission_id, element_id, role_name, can_read, can_write)
 SELECT UUID_STRING(), element_id, role, can_read, can_write FROM (
-    SELECT 've_vendor_name' as element_id, 'Editor' as role, TRUE as can_read, TRUE as can_write UNION ALL
-    SELECT 've_vendor_name', 'Approver_L1', TRUE, FALSE UNION ALL
-    SELECT 've_vendor_name', 'Approver_L2', TRUE, FALSE UNION ALL
-    SELECT 've_vendor_name', 'Viewer', TRUE, FALSE UNION ALL
-    SELECT 've_reg_date', 'Editor', TRUE, TRUE UNION ALL
-    SELECT 've_reg_date', 'Approver_L1', TRUE, FALSE UNION ALL
-    SELECT 've_reg_date', 'Approver_L2', TRUE, FALSE UNION ALL
-    SELECT 've_reg_date', 'Viewer', TRUE, FALSE UNION ALL
-    SELECT 've_industry', 'Editor', TRUE, TRUE UNION ALL
-    SELECT 've_industry', 'Approver_L1', TRUE, FALSE UNION ALL
-    SELECT 've_industry', 'Approver_L2', TRUE, FALSE UNION ALL
-    SELECT 've_industry', 'Viewer', TRUE, FALSE UNION ALL
-    SELECT 've_docs', 'Editor', TRUE, TRUE UNION ALL
-    SELECT 've_docs', 'Approver_L1', TRUE, FALSE UNION ALL
-    SELECT 've_docs', 'Approver_L2', TRUE, FALSE UNION ALL
-    SELECT 've_docs', 'Viewer', TRUE, FALSE UNION ALL
-    SELECT 'vb_save', 'Editor', TRUE, FALSE UNION ALL
-    SELECT 'vb_submit', 'Editor', TRUE, FALSE UNION ALL
-    SELECT 'vb_approve', 'Approver_L1', TRUE, FALSE UNION ALL
-    SELECT 'vb_approve', 'Approver_L2', TRUE, FALSE UNION ALL
-    SELECT 'vb_reject', 'Approver_L1', TRUE, FALSE UNION ALL
-    SELECT 'vb_reject', 'Approver_L2', TRUE, FALSE
+    SELECT 've_vendor_name', 'Editor', TRUE, TRUE UNION ALL SELECT 've_vendor_name', 'Approver_L1', TRUE, FALSE UNION ALL SELECT 've_vendor_name', 'Approver_L2', TRUE, FALSE UNION ALL SELECT 've_vendor_name', 'Viewer', TRUE, FALSE UNION ALL
+    SELECT 've_reg_date', 'Editor', TRUE, TRUE UNION ALL SELECT 've_reg_date', 'Approver_L1', TRUE, FALSE UNION ALL SELECT 've_reg_date', 'Approver_L2', TRUE, FALSE UNION ALL SELECT 've_reg_date', 'Viewer', TRUE, FALSE UNION ALL
+    SELECT 've_industry', 'Editor', TRUE, TRUE UNION ALL SELECT 've_industry', 'Approver_L1', TRUE, FALSE UNION ALL SELECT 've_industry', 'Approver_L2', TRUE, FALSE UNION ALL SELECT 've_industry', 'Viewer', TRUE, FALSE UNION ALL
+    SELECT 've_docs', 'Editor', TRUE, TRUE UNION ALL SELECT 've_docs', 'Approver_L1', TRUE, FALSE UNION ALL SELECT 've_docs', 'Approver_L2', TRUE, FALSE UNION ALL SELECT 've_docs', 'Viewer', TRUE, FALSE UNION ALL
+    SELECT 'vb_save', 'Editor', TRUE, FALSE UNION ALL SELECT 'vb_submit', 'Editor', TRUE, FALSE UNION ALL
+    SELECT 'vb_approve', 'Approver_L1', TRUE, FALSE UNION ALL SELECT 'vb_approve', 'Approver_L2', TRUE, FALSE UNION ALL
+    SELECT 'vb_reject', 'Approver_L1', TRUE, FALSE UNION ALL SELECT 'vb_reject', 'Approver_L2', TRUE, FALSE
 );
 INSERT INTO ROLE_PERMISSIONS (permission_id, element_id, role_name, can_read, can_write)
 SELECT UUID_STRING(), element_id, 'Admin', TRUE, TRUE FROM ELEMENTS WHERE screen_id = 'vendor_onboarding';
 
 -- ----------------------------------------------------------------------------
--- 5. Screen Configuration: "Investment Fund" (New)
+-- 5. Screen Configuration: "Investment Fund"
 -- ----------------------------------------------------------------------------
 INSERT INTO SCREENS (screen_id, screen_name, description, target_table, unique_key_column) VALUES
   ('fund_screen', 'Investment Fund', 'Screen to manage investment funds.', 'FUND_DATA', 'record_id');
@@ -109,7 +93,6 @@ INSERT INTO SCREEN_GROUPS (group_id, screen_id, group_name, display_order) VALUE
   ('fg_details', 'fund_screen', 'Fund Details', 1),
   ('fg_actions', 'fund_screen', 'Workflow Actions', 2);
 
--- Elements for the new screen, demonstrating the declarative dropdown
 INSERT INTO ELEMENTS (element_id, group_id, element_type, label, db_column, display_order, options_source_table, options_value_column, options_label_column, options_query) VALUES
   ('fe_fund_name', 'fg_details', 'text', 'Fund Name', 'fund_name', 1, NULL, NULL, NULL, NULL),
   ('fe_inception_date', 'fg_details', 'date', 'Inception Date', 'inception_date', 2, NULL, NULL, NULL, NULL),
@@ -122,19 +105,16 @@ INSERT INTO ELEMENTS (element_id, group_id, element_type, label, db_column, disp
 -- Permissions for Investment Fund screen
 INSERT INTO ROLE_PERMISSIONS (permission_id, element_id, role_name, can_read, can_write)
 SELECT UUID_STRING(), element_id, role, can_read, can_write FROM (
-    SELECT 'fe_fund_name', 'Editor', TRUE, TRUE UNION ALL
-    SELECT 'fe_inception_date', 'Editor', TRUE, TRUE UNION ALL
-    SELECT 'fe_fund_type', 'Editor', TRUE, TRUE UNION ALL
-    SELECT 'fb_save', 'Editor', TRUE, FALSE UNION ALL
-    SELECT 'fb_submit', 'Editor', TRUE, FALSE UNION ALL
-    SELECT 'fb_approve', 'Approver_L1', TRUE, FALSE UNION ALL
-    SELECT 'fb_reject', 'Approver_L1', TRUE, FALSE
+    SELECT 'fe_fund_name', 'Editor', TRUE, TRUE UNION ALL SELECT 'fe_inception_date', 'Editor', TRUE, TRUE UNION ALL SELECT 'fe_fund_type', 'Editor', TRUE, TRUE UNION ALL
+    SELECT 'fb_save', 'Editor', TRUE, FALSE UNION ALL SELECT 'fb_submit', 'Editor', TRUE, FALSE UNION ALL
+    SELECT 'fb_approve', 'Approver_L1', TRUE, FALSE UNION ALL SELECT 'fb_reject', 'Approver_L1', TRUE, FALSE
 );
 INSERT INTO ROLE_PERMISSIONS (permission_id, element_id, role_name, can_read, can_write)
 SELECT UUID_STRING(), element_id, 'Admin', TRUE, TRUE FROM ELEMENTS WHERE screen_id = 'fund_screen';
 
--- (Admin UI config from previous version is omitted for brevity but would be here)
--- For this task, focusing on the new screen is sufficient.
+-- ----------------------------------------------------------------------------
+-- 6. Admin UI Configuration
+-- ----------------------------------------------------------------------------
 INSERT INTO SCREENS (screen_id, screen_name, description, target_table, unique_key_column) VALUES
   ('admin_users', 'User Management', 'Admin screen to manage users and roles.', 'USERS', 'user_id');
 INSERT INTO SCREEN_GROUPS (group_id, screen_id, group_name, display_order) VALUES
